@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>Escanear QR</title>
+
+  <script src="https://unpkg.com/html5-qrcode"
+          type="text/javascript"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f3f4;
+    }
+
+    .contenedor {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .tarjeta {
+      background: white;
+      width: 100%;
+      max-width: 500px;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 24px;
+    }
+
+    #reader {
+      width: 100%;
+      margin: 20px auto;
+    }
+
+    #mensaje {
+      margin: 15px 0;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .rojo {
+      background: #d93025;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .rojo:hover {
+      background: #b3261e;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+  <div class="tarjeta">
+
+    <h1>📷 ESCANEAR QR</h1>
+
+    <div id="reader"></div>
+
+    <div id="mensaje">
+      Iniciando cámara...
+    </div>
+
+    <button class="rojo" onclick="cancelar()">
+      CANCELAR
+    </button>
+
+  </div>
+
+</div>
+
+<script>
+
+  // ==========================================
+  // AQUÍ DESPUÉS PONDREMOS LA URL DE TU APP
+  // ==========================================
+
+  var URL_APLICACION =
+    "AQUI_VA_LA_URL_DE_TU_APLICACION_/exec";
+
+
+  var lector = null;
+  var procesando = false;
+
+
+  // ==========================================
+  // INICIAR LECTOR
+  // ==========================================
+
+  function iniciar() {
+
+    lector = new Html5Qrcode("reader");
+
+    var configuracion = {
+
+      fps: 10,
+
+      qrbox: function(width, height) {
+
+        var tamaño =
+          Math.min(width * 0.75, height * 0.75);
+
+        return {
+          width: tamaño,
+          height: tamaño
+        };
+
+      }
+
+    };
+
+
+    lector.start(
+
+      {
+        facingMode: "environment"
+      },
+
+      configuracion,
+
+
+      // ======================================
+      // QR DETECTADO
+      // ======================================
+
+      function(textoQR) {
+
+        if (procesando) {
+          return;
+        }
+
+        procesando = true;
+
+        document.getElementById("mensaje").innerText =
+          "QR detectado. Abriendo registro...";
+
+
+        lector.stop()
+          .then(function() {
+
+            regresarAplicacion(textoQR);
+
+          })
+          .catch(function() {
+
+            regresarAplicacion(textoQR);
+
+          });
+
+      },
+
+
+      // ======================================
+      // ERROR DE LECTURA
+      // ======================================
+
+      function(errorMessage) {
+
+        // No hacemos nada.
+        // Estos mensajes aparecen mientras
+        // la cámara busca el QR.
+
+      }
+
+    )
+
+
+    // ========================================
+    // CÁMARA INICIADA
+    // ========================================
+
+    .then(function() {
+
+      document.getElementById("mensaje").innerText =
+        "Apunta la cámara al código QR.";
+
+    })
+
+
+    // ========================================
+    // ERROR AL ABRIR CÁMARA
+    // ========================================
+
+    .catch(function(error) {
+
+      document.getElementById("mensaje").innerText =
+        "No se pudo abrir la cámara: " + error;
+
+    });
+
+  }
+
+
+  // ==========================================
+  // REGRESAR A NUESTRA APLICACIÓN
+  // ==========================================
+
+  function regresarAplicacion(textoQR) {
+
+    var url =
+      URL_APLICACION +
+      "?qr=" +
+      encodeURIComponent(textoQR);
+
+    window.location.href = url;
+
+  }
+
+
+  // ==========================================
+  // CANCELAR
+  // ==========================================
+
+  function cancelar() {
+
+    if (lector) {
+
+      lector.stop()
+        .then(function() {
+
+          window.history.back();
+
+        })
+        .catch(function() {
+
+          window.history.back();
+
+        });
+
+    } else {
+
+      window.history.back();
+
+    }
+
+  }
+
+
+  // ==========================================
+  // INICIAR AL CARGAR LA PÁGINA
+  // ==========================================
+
+  window.addEventListener("load", iniciar);
+
+</script>
+
+</body>
+</html>
