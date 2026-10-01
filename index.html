@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
   <meta charset="UTF-8">
 
   <meta name="viewport"
@@ -8,10 +10,13 @@
 
   <title>Escanear QR</title>
 
-  <script src="https://unpkg.com/html5-qrcode"
-          type="text/javascript"></script>
+  <script
+    src="https://unpkg.com/html5-qrcode"
+    type="text/javascript">
+  </script>
 
   <style>
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -54,21 +59,35 @@
       color: #333;
     }
 
-    .rojo {
-      background: #d93025;
-      color: white;
+    button {
       border: none;
       padding: 12px 25px;
       border-radius: 6px;
       font-size: 14px;
       cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
     }
 
-    .rojo:hover {
-      background: #b3261e;
+    .rojo {
+      background: #d93025;
+      color: white;
     }
+
+    .azul {
+      background: #1a73e8;
+      color: white;
+    }
+
+    button:disabled {
+      background: #999;
+      cursor: wait;
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
@@ -84,7 +103,17 @@
       Iniciando cámara...
     </div>
 
-    <button class="rojo" onclick="cancelar()">
+    <button
+      id="botonEscanear"
+      class="azul"
+      onclick="iniciar()"
+      style="display:none;">
+      📷 ESCANEAR OTRO QR
+    </button>
+
+    <button
+      class="rojo"
+      onclick="cancelar()">
       CANCELAR
     </button>
 
@@ -92,27 +121,73 @@
 
 </div>
 
+
 <script>
 
-  // ==========================================
-  // AQUÍ DESPUÉS PONDREMOS LA URL DE TU APP
-  // ==========================================
+  // ==================================================
+  // URL DE TU APLICACIÓN DE APPS SCRIPT
+  // ==================================================
 
   var URL_APLICACION =
     "https://script.google.com/macros/s/AKfycbzEXXFt3h6k--cw8Jg0523hrU8yiC2Ie_y01lLJC6R0AN83GBNVsbODL2v1bEo9tuxs/exec";
 
 
+  // ==================================================
+  // VARIABLES
+  // ==================================================
+
   var lector = null;
+
   var procesando = false;
 
 
-  // ==========================================
-  // INICIAR LECTOR
-  // ==========================================
+  // ==================================================
+  // INICIAR CÁMARA
+  // ==================================================
 
   function iniciar() {
 
+    procesando = false;
+
+    document.getElementById("mensaje").innerText =
+      "Iniciando cámara...";
+
+    document.getElementById("botonEscanear").style.display =
+      "none";
+
+
+    // Si ya existe un lector anterior,
+    // intentamos detenerlo.
+
+    if (lector) {
+
+      lector.stop()
+        .catch(function() {})
+        .finally(function() {
+
+          crearLector();
+
+        });
+
+    }
+
+    else {
+
+      crearLector();
+
+    }
+
+  }
+
+
+  // ==================================================
+  // CREAR LECTOR
+  // ==================================================
+
+  function crearLector() {
+
     lector = new Html5Qrcode("reader");
+
 
     var configuracion = {
 
@@ -142,9 +217,9 @@
       configuracion,
 
 
-      // ======================================
+      // ==============================================
       // QR DETECTADO
-      // ======================================
+      // ==============================================
 
       function(textoQR) {
 
@@ -154,43 +229,37 @@
 
         procesando = true;
 
+
         document.getElementById("mensaje").innerText =
           "QR detectado. Abriendo registro...";
 
 
-        lector.stop()
-          .then(function() {
+        detenerCamara(function() {
 
-            regresarAplicacion(textoQR);
+          regresarAplicacion(textoQR);
 
-          })
-          .catch(function() {
-
-            regresarAplicacion(textoQR);
-
-          });
+        });
 
       },
 
 
-      // ======================================
+      // ==============================================
       // ERROR DE LECTURA
-      // ======================================
+      // ==============================================
 
       function(errorMessage) {
 
-        // No hacemos nada.
-        // Estos mensajes aparecen mientras
-        // la cámara busca el QR.
+        // No mostramos estos errores.
+        // Son normales mientras busca el QR.
 
       }
 
     )
 
 
-    // ========================================
+    // ==============================================
     // CÁMARA INICIADA
-    // ========================================
+    // ==============================================
 
     .then(function() {
 
@@ -200,23 +269,57 @@
     })
 
 
-    // ========================================
-    // ERROR AL ABRIR CÁMARA
-    // ========================================
+    // ==============================================
+    // ERROR
+    // ==============================================
 
     .catch(function(error) {
 
       document.getElementById("mensaje").innerText =
         "No se pudo abrir la cámara: " + error;
 
+      document.getElementById("botonEscanear").style.display =
+        "block";
+
     });
 
   }
 
 
-  // ==========================================
-  // REGRESAR A NUESTRA APLICACIÓN
-  // ==========================================
+  // ==================================================
+  // DETENER CÁMARA
+  // ==================================================
+
+  function detenerCamara(callback) {
+
+    if (!lector) {
+
+      callback();
+      return;
+
+    }
+
+
+    lector.stop()
+
+      .then(function() {
+
+        callback();
+
+      })
+
+      .catch(function() {
+
+        callback();
+
+      });
+
+  }
+
+
+  // ==================================================
+  // REGRESAR A APPS SCRIPT
+  // ==================================================
 
   function regresarAplicacion(textoQR) {
 
@@ -230,42 +333,36 @@
   }
 
 
-  // ==========================================
+  // ==================================================
   // CANCELAR
-  // ==========================================
+  // ==================================================
 
   function cancelar() {
 
-    if (lector) {
-
-      lector.stop()
-        .then(function() {
-
-          window.history.back();
-
-        })
-        .catch(function() {
-
-          window.history.back();
-
-        });
-
-    } else {
+    detenerCamara(function() {
 
       window.history.back();
 
-    }
+    });
 
   }
 
 
-  // ==========================================
-  // INICIAR AL CARGAR LA PÁGINA
-  // ==========================================
+  // ==================================================
+  // INICIAR AUTOMÁTICAMENTE
+  // ==================================================
 
-  window.addEventListener("load", iniciar);
+  window.addEventListener(
+    "load",
+    function() {
+
+      iniciar();
+
+    }
+  );
 
 </script>
 
 </body>
+
 </html>
