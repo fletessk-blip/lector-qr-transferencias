@@ -352,14 +352,11 @@
   // INICIAR AUTOMÁTICAMENTE
   // ==================================================
 
-  window.addEventListener(
-    "load",
-    function() {
-
-      iniciar();
-
-    }
-  );
+window.addEventListener("load", function() {
+  setTimeout(function() {
+    iniciar();
+  }, 500);
+});
 
 </script>
 
