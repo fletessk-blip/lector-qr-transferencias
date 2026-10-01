@@ -183,83 +183,80 @@
   // ==================================================
   // CREAR LECTOR
   // ==================================================
+  
+function crearLector() {
 
-  function crearLector() {
+  lector = new Html5Qrcode("reader");
 
-    lector = new Html5Qrcode("reader");
+  var configuracion = {
 
+    fps: 10,
 
-    var configuracion = {
+    qrbox: function(width, height) {
 
-      fps: 10,
+      var tamaño =
+        Math.min(width * 0.75, height * 0.75);
 
-      qrbox: function(width, height) {
+      return {
+        width: tamaño,
+        height: tamaño
+      };
 
-        var tamaño =
-          Math.min(width * 0.75, height * 0.75);
+    }
 
-        return {
-          width: tamaño,
-          height: tamaño
-        };
+  };
+
+  Html5Qrcode.getCameras()
+
+    .then(function(camaras) {
+
+      if (!camaras || camaras.length === 0) {
+
+        throw new Error(
+          "No se encontró ninguna cámara en el dispositivo."
+        );
 
       }
 
-    };
+      // Buscar preferentemente la cámara trasera
 
+      var camara = camaras[camaras.length - 1];
 
-    lector.start(
+      return lector.start(
 
-      {
-        facingMode: "environment"
-      },
+        camara.id,
 
-      configuracion,
+        configuracion,
 
+        function(textoQR) {
 
-      // ==============================================
-      // QR DETECTADO
-      // ==============================================
+          if (procesando) {
+            return;
+          }
 
-      function(textoQR) {
+          procesando = true;
 
-        if (procesando) {
-          return;
+          document.getElementById("mensaje").innerText =
+            "QR detectado. Abriendo registro...";
+
+          detenerCamara(function() {
+
+            regresarAplicacion(textoQR);
+
+          });
+
+        },
+
+        function(errorMessage) {
+
+          // Errores normales mientras busca el QR.
+          // No mostramos nada.
+
         }
 
-        procesando = true;
+      );
 
-
-        document.getElementById("mensaje").innerText =
-          "QR detectado. Abriendo registro...";
-
-
-        detenerCamara(function() {
-
-          regresarAplicacion(textoQR);
-
-        });
-
-      },
-
-
-      // ==============================================
-      // ERROR DE LECTURA
-      // ==============================================
-
-      function(errorMessage) {
-
-        // No mostramos estos errores.
-        // Son normales mientras busca el QR.
-
-      }
-
-    )
-
-
-    // ==============================================
-    // CÁMARA INICIADA
-    // ==============================================
+    })
 
     .then(function() {
 
@@ -267,11 +264,6 @@
         "Apunta la cámara al código QR.";
 
     })
-
-
-    // ==============================================
-    // ERROR
-    // ==============================================
 
     .catch(function(error) {
 
@@ -283,8 +275,7 @@
 
     });
 
-  }
-
+}
 
   // ==================================================
   // DETENER CÁMARA
